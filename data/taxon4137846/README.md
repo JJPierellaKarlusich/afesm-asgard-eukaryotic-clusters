@@ -41,3 +41,8 @@ Lineages use the NCBI taxonomy in force when each entry was archived (e.g., Eury
 | `UniProtID` | Deleted UniProt accession (AFESM member identifier) |
 | `NCBI_TaxID` | NCBI taxonomy identifier from the archived UniSave entry |
 | `Lineage` | Taxonomic lineage from the archived entry, from domain to the lowest assigned taxon, semicolon-separated, without rank labels |
+
+## `memId_with_gtdbtaxid4137846_Uniprot_Unisave.ipynb`	
+
+Pipeline that produced both data files: extraction of members from the AFESM cluster mapping file, UniProt ID Mapping, classification, and UniSave retrieval for deleted accessions
+
