@@ -8,7 +8,7 @@ The output is one row per cluster with integer protein counts. Use it to find cl
 
 | File | Description |
 |---|---|
-| `AFESM_cluster_composition_colab.ipynb` | The Colab notebook that builds the table. |
+| `AFESM_cluster_composition.ipynb` | The Colab notebook that builds the table. |
 | `data/taxon4137846/memId_with_gtdbtaxid4137846.Uniprot.tsv.gz` | UniProt / UniSave annotation of the taxID-4137846 members, read by cell 2b. |
 | `afesm_cluster_composition.geq20.noFlag3.slim.tsv.gz` | The resulting table (22 MB): 1,894,714 clusters × 41 columns, built with `MIN_TOTAL=20`, `DROP_FLAG3=True`, `APPLY_ASGARD_FIX=True`. |
 
@@ -22,7 +22,7 @@ shared = cc[(cc.As > 0) & (cc.E_total > 0)]   # clusters with both Asgard and eu
 
 ## Quick start
 
-1. Open `AFESM_cluster_composition_colab.ipynb` in Google Colab.
+1. Open `AFESM_cluster_composition.ipynb` in Google Colab.
 2. Set the parameters in the **Setup** cell (defaults below).
 3. *Runtime → Run all*.
 
