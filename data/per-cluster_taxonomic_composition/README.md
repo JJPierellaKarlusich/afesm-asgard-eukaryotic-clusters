@@ -1,8 +1,24 @@
 # AFESM per-cluster taxonomic composition
 
-A Google Colab notebook that counts, for every cluster of the **AFESM** structural database (AlphaFold DB + ESM Atlas; *Metagenomic-scale analysis of the predicted protein structure universe*, [bioRxiv 2025.04.23.650224](https://doi.org/10.1101/2025.04.23.650224)), how many member proteins belong to each taxonomic category. Eukaryotes are split by supergroup and Asgard archaea by GTDB class.
+A Google Colab notebook that counts, for every cluster of the **AFESM** structural database (*Metagenomic-scale analysis of the predicted protein structure universe*, [bioRxiv 2025.04.23.650224](https://doi.org/10.1101/2025.04.23.650224)), how many member proteins belong to each taxonomic category. Eukaryotes are split by supergroup and Asgard archaea by GTDB class.
 
 The output is one row per cluster with integer protein counts. Use it to find clusters shared between Asgard archaea and eukaryotes, or to filter clusters by taxonomic make-up.
+
+## Repository contents
+
+| File | Description |
+|---|---|
+| `AFESM_cluster_composition_colab.ipynb` | The Colab notebook that builds the table. |
+| `data/taxon4137846/memId_with_gtdbtaxid4137846.Uniprot.tsv.gz` | UniProt / UniSave annotation of the taxID-4137846 members, read by cell 2b. |
+| `afesm_cluster_composition.geq20.noFlag3.slim.tsv.gz` | The resulting table (22 MB): 1,894,714 clusters × 41 columns, built with `MIN_TOTAL=20`, `DROP_FLAG3=True`, `APPLY_ASGARD_FIX=True`. |
+
+You only need to run the notebook to rebuild the table or to use different settings.
+
+```python
+import pandas as pd
+cc = pd.read_csv("afesm_cluster_composition.geq20.noFlag3.slim.tsv.gz", sep="\t")
+shared = cc[(cc.As > 0) & (cc.E_total > 0)]   # clusters with both Asgard and eukaryotic members
+```
 
 ## Quick start
 
@@ -26,9 +42,7 @@ All inputs are downloaded by the notebook.
 |---|---|
 | `7-taxonomy.tar.gz` | AFESM NCBI/GTDB-style taxonomy dump (`afesm_nodes.dmp`, `afesm_names.dmp`, `afesm_merged.dmp`), from `https://afesm.steineggerlab.workers.dev/v1/` |
 | `3-repId_memId_cluFlag_taxId_biomeId.tsv.gz` | AFESM cluster membership, 820,460,384 rows / 157,068,338 clusters, 7.2 GB, same server |
-| `memId_with_gtdbtaxid4137846.Uniprot.tsv.gz` | UniProt (and UniSave, for deleted entries) annotation of every member filed under taxID 4137846; downloaded from Google Drive |
-
-> **Note:** the AFESM server runs on a Cloudflare Workers plan and is sometimes rate-limited (HTTP 429, Cloudflare error 1027). Download the two AFESM files once, keep a copy on Google Drive, and copy them into `afesm/` before running. The download cells skip any file that is already present and valid.
+| `memId_with_gtdbtaxid4137846.Uniprot.tsv.gz` | UniProt (and UniSave, for deleted entries) annotation of every member filed under taxID 4137846; included in this repository (`data/taxon4137846/`) |
 
 ## Classification
 
@@ -54,12 +68,12 @@ The dump files most Asgard taxa under GTDB (`Asgardarchaeota; <class>; …`) and
   - Loki-/Promethe-, Hel- and Sigynarchaeota → **Lokiarchaeia**
   - Borrarchaeota → **Sifarchaeia**
   - any other phylum → `<stem>archaeia`
-- **Panguiarchaeales** are filed in GTDB under *Thermoproteota; JANJXX01*; they are counted as Asgard and placed in **Njordarchaeia** ([MBE 2025](https://doi.org/10.1093/molbev/msaf201)). Two GTDB taxIDs on this path are forced to Asgard: 4138202 and 4140603.
+- **Panguiarchaeales** are filed in GTDB under *Thermoproteota; JANJXX01*; they are counted as Asgard and placed in **Njordarchaeia** ([MBE 2025](https://doi.org/10.1093/molbev/msaf201)). 
 - `incertae sedis` ranks are skipped and the next rank down is used. Taxa resolved only to phylum (`Asgardarchaeota`, *Asgard group archaeon*) go to `As_unresolved`.
 
 ### Eukaryotic supergroups
 
-Opisthokonta are split into Metazoa, Fungi and other. The other groups are Archaeplastida, SAR (Stramenopiles, Alveolata, Rhizaria, unknown), Haptista, Cryptophyceae and Amoebozoa. The basal excavate lineages Discoba, Metamonada and Malawimonadida follow [Nature 640, 974–981 (2025)](https://doi.org/10.1038/s41586-025-08709-5). The orphan lineages are Hemimastigophora, Apusozoa, Breviatea, Provora, Ancyromonadida and CRuMs.
+Opisthokonta are split into Metazoa, Fungi and other. The other main groups are Archaeplastida, SAR (Stramenopiles, Alveolata, Rhizaria, unknown), Haptista, Cryptophyceae and Amoebozoa. In addition, the table separates the 'excavate' lineages Discoba, Metamonada and Malawimonadida (`E_basal_*` columns), which fall on both sides of the inferred eukaryotic root [Nature 640, 974–981 (2025)](https://doi.org/10.1038/s41586-025-08709-5). The orphan lineages are Hemimastigophora, Apusozoa, Breviatea, Provora, Ancyromonadida and CRuMs.
 
 `E_Unassigned` pools eukaryotes that cannot be placed in a supergroup: domain-only lineages, `environmental samples`, `unclassified eukaryotes` and `Eukaryota incertae sedis`.
 
@@ -92,7 +106,21 @@ AFESM files 1,035,956 proteins under the composite taxID 4137846 (`cellular orga
 | `As_<class>` | Asgard proteins per class |
 | `E_<group>` | eukaryotic proteins per supergroup |
 
-The last cell writes a **slim** version (`….slim.tsv.gz`). It drops `total_all`, `n_flag3` and `cluFlag12`, which are constant when `MIN_TOTAL=20, DROP_FLAG3=True`, plus every all-zero column. It checks that all sums still hold before writing.
+Cell 6 writes a **slim** version (`….slim.tsv.gz`). It drops `total_all`, `n_flag3` and `cluFlag12`, which are constant when `MIN_TOTAL=20, DROP_FLAG3=True`, plus every all-zero column. It checks that all sums still hold before writing.
+
+### Columns of the provided slim table
+
+| Column(s) | Meaning |
+|---|---|
+| `repId` | cluster representative (UniProt accession or MGnify `MGYP…` ID) |
+| `total` | proteins in the cluster (flag-3 members excluded); equals the sum of `B A uA V U`, all `As_` and all `E_` columns |
+| `E_total` | eukaryotic proteins (sum of `E_` columns) |
+| `As` | Asgard proteins (sum of `As_` columns) |
+| `B`, `A`, `uA`, `V`, `U` | Bacteria, non-Asgard Archaea, unresolved Archaea, Viruses, Unassigned |
+| `As_Baldrarchaeia`, `As_Heimdallarchaeia`, `As_Hermodarchaeia`, `As_JAGGXT01`, `As_Jordarchaeia`, `As_Lokiarchaeia`, `As_Njordarchaeia`, `As_Odinarchaeia`, `As_Sifarchaeia`, `As_Thorarchaeia`, `As_Wukongarchaeia`, `As_unresolved` | Asgard proteins by GTDB class (12 columns) |
+| `E_O_Metazoa`, `E_O_Fungi`, `E_O_other`, `E_Sar_Alveolata`, `E_Sar_Stramenopiles`, `E_Sar_Rhizaria`, `E_Sar_unknown`, `E_Archaeplastida`, `E_Amoebozoa`, `E_Haptista`, `E_Cryptophyceae`, `E_Apusozoa`, `E_basal_Discoba`, `E_basal_Metamonada`, `E_basal_Malawimonadida`, `E_CRuMs`, `E_Ancyromonadida`, `E_Breviatea`, `E_Provora`, `E_Unassigned` | eukaryotic proteins by supergroup (20 columns) |
+
+Columns dropped because they are all zero in this scope: `As_Asgardarchaeia`, `As_Freyarchaeia`, `As_Friggarchaeia`, `As_Gefionarchaeia`, `As_Idunnarchaeia`, and `E_Hemimastigophora` (no Hemimastigophora protein falls in a cluster of ≥20 that passes the pLDDT filter).
 
 ### Reference result (`MIN_TOTAL=20`, `DROP_FLAG3=True`, `APPLY_ASGARD_FIX=True`)
 
@@ -125,24 +153,3 @@ Asgard proteins by class:
 | Hermodarchaeia | 2,626 | 0.6 | 1,461 |
 | Wukongarchaeia | 330 | 0.07 | 221 |
 
-In AFESM every flag-3 member sits in a cluster with no flag-1/2 member. So `DROP_FLAG3=True` gives the same result as keeping only clusters with `cluFlag12 == 1`: 1,894,714 of the 2,355,093 clusters with ≥20 members.
-
-## Validation
-
-The notebook stops with an error if any of these checks fails:
-
-- it sees exactly 157,068,338 clusters, and every taxID maps to a category;
-- in every row, the category columns sum to `total`, `E_` columns sum to `E_total`, and `As_` columns sum to `As`;
-- no category label contains whitespace;
-- the 4137846 reclassification gives exactly the counts in the table above;
-- the per-category totals (`As`, `A`, `uA`, `B`, `E`, `U`, `V`) reproduce an independent implementation (`1_clusters_with_20counts_treemap_for_taxonomy_4137846fix.ipynb`). The two outputs were also compared cluster by cluster: running with `MIN_TOTAL=1` and filtering to ≥20 gives a byte-identical table.
-
-`AS_GROUP` in cell 5b pools `As_` columns, for example small classes into one bin, without re-running the pass.
-
-## Citation
-
-If you use this table, please cite the AFESM paper ([bioRxiv 2025.04.23.650224](https://doi.org/10.1101/2025.04.23.650224)) and this repository.
-
-## License
-
-<!-- e.g. MIT for code; AFESM data are subject to their original licenses -->
